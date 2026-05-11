@@ -27,9 +27,12 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     
-    # Твои приложения
-    'users',
-    'club',
+    # Твои приложения (только по одному разу и только через apps.)
+    'apps.accounts',
+    'apps.club_base',
+    'apps.training',
+    'apps.achievements',
+    'apps.competitions',
 ]
 
 MIDDLEWARE = [
@@ -75,8 +78,6 @@ DATABASES = {
     }
 }
 
-# 2. Кастомная модель пользователя
-AUTH_USER_MODEL = 'users.User'
 
 # 3. Настройка REST Framework
 REST_FRAMEWORK = {
