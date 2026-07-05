@@ -21,11 +21,14 @@ class TrainingGroup(models.Model):
         verbose_name="Секция"
     )
     coach = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True, 
-        limit_choices_to={'role': 'coach'},
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        # У стандартной модели User нет поля role — тренером может быть
+        # назначен любой сотрудник (is_staff). Прежний фильтр {'role': 'coach'}
+        # ронял форму в админке с FieldError.
+        limit_choices_to={'is_staff': True},
         verbose_name="Тренер"
     )
 
@@ -57,3 +60,16 @@ class Schedule(models.Model):
 
     def __str__(self):
         return f"{self.group.name} - {self.get_day_of_week_display()}"
+
+class Coach(models.Model):
+    first_name = models.CharField(max_length=50, verbose_name="Имя")
+    last_name = models.CharField(max_length=50, verbose_name="Фамилия", blank=True, null=True)
+    bio = models.TextField(verbose_name="Описание", blank=True, null=True)
+    experience = models.IntegerField(verbose_name="Опыт (лет)", default=0)
+
+    class Meta:
+        verbose_name = "Тренер"
+        verbose_name_plural = "Тренеры"
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}".strip()

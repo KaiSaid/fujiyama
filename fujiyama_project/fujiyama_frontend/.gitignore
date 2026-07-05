@@ -8,7 +8,8 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
+# dist коммитится: Amvera деплоит из git, npm на сервере нет,
+# поэтому собранный фронтенд едет вместе с кодом (см. корневой .gitignore)
 dist-ssr
 *.local
 

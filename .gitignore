@@ -1,0 +1,31 @@
+# Виртуальные окружения
+.venv/
+venv/
+fujiyama_project/venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Django
+fujiyama_project/staticfiles/
+db.sqlite3
+*.log
+
+# Node / Vite
+node_modules/
+.vite/
+# ВАЖНО: dist/ (собранный фронтенд) НЕ игнорируется — Amvera деплоит из git,
+# а npm на сервере нет, поэтому сборка коммитится вместе с кодом.
+
+# Секреты и локальные настройки
+.env
+.env.*
+!.env.example
+
+# IDE и ОС
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

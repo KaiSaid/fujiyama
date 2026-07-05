@@ -1,0 +1,7 @@
+# Домен берётся из переменной DOMAIN (её задаёт run-caddy.bat).
+# Caddy слушает 80/443, сам получает HTTPS-сертификат Let's Encrypt
+# и проксирует запросы на локальный бэкенд waitress (порт 8000).
+{$DOMAIN} {
+    encode gzip
+    reverse_proxy 127.0.0.1:8000
+}

@@ -1,0 +1,7 @@
+# {$DOMAIN} подставляется из docker-compose.yml (переменная DOMAIN в .env).
+# Если указан настоящий домен — Caddy сам выпустит и будет продлевать
+# HTTPS-сертификат Let's Encrypt. Без домена сайт работает по HTTP (порт 80).
+{$DOMAIN} {
+    encode gzip
+    reverse_proxy web:8000
+}

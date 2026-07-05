@@ -1,0 +1,12 @@
+# В образ не попадают виртуальные окружения, git и локальный мусор
+.git
+.gitignore
+.claude
+.env
+.env.*
+.venv/
+fujiyama_project/venv/
+fujiyama_project/staticfiles/
+fujiyama_project/fujiyama_frontend/node_modules/
+**/__pycache__/
+**/*.py[cod]

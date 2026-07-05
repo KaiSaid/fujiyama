@@ -28,3 +28,36 @@ class Attendance(models.Model):
     class Meta:
         verbose_name = "Посещаемость"
         verbose_name_plural = "Посещаемость"
+
+
+class TrialRequest(models.Model):
+    """Заявка на запись с сайта — без учётной записи, только имя и телефон.
+    Администратор перезванивает и договаривается о пробной тренировке."""
+    STATUS_CHOICES = [
+        ('new', 'Новая'),
+        ('processed', 'Обработана'),
+    ]
+    name = models.CharField(max_length=100, verbose_name="Имя")
+    phone = models.CharField(max_length=20, verbose_name="Телефон")
+    # SET_NULL: при удалении группы контакт человека не теряется
+    group = models.ForeignKey(
+        'fujiyama_club.TrainingGroup',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='trial_requests',
+        verbose_name="Группа",
+    )
+    comment = models.TextField(blank=True, verbose_name="Комментарий")
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default='new', verbose_name="Статус",
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Создана")
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Заявка на запись"
+        verbose_name_plural = "Заявки на запись"
+
+    def __str__(self):
+        return f"{self.name} ({self.phone})"

@@ -2,12 +2,27 @@ meta:
   environment: python
   toolchain:
     name: pip
-    version: 3.10
+    # Django 6 требует Python 3.12+
+    version: 3.12
 build:
   requirementsPath: requirements.txt
 run:
   persistenceMounts:
     - path: /data
       mountPath: /data
-  # Замени 'fujiyama' на название папки, где лежит твой wsgi.py
-  command: gunicorn fujiyama.wsgi:application --bind 0.0.0.0:80
+  # Код проекта лежит в подпапке fujiyama_project, модуль настроек — fujiyama_core.
+  # Фронтенд собран заранее (npm run build) и закоммичен в fujiyama_frontend/dist —
+  # Django раздаёт его сам (index.html + статика через whitenoise).
+  # createsuperuser создаёт админа при первом запуске (если заданы DJANGO_SUPERUSER_*),
+  # при повторных запусках молча пропускается.
+  command: sh -c "cd fujiyama_project && python manage.py migrate --noinput && (python manage.py createsuperuser --noinput || true) && python manage.py collectstatic --noinput && gunicorn fujiyama_core.wsgi:application --bind 0.0.0.0:80 --workers 2"
+# ВАЖНО: в панели Amvera (Настройки → Переменные) задайте:
+#   DJANGO_SECRET_KEY            — случайная длинная строка (50+ символов)
+#   DJANGO_DEBUG                 — False
+#   DJANGO_ALLOWED_HOSTS         — домены через запятую: myapp-user.amvera.io,fujiyama-club.ru
+#   DJANGO_CSRF_TRUSTED_ORIGINS  — те же домены с https://, через запятую
+#   POSTGRES_DB / POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_HOST / POSTGRES_PORT
+#     — данные PostgreSQL, созданного в Amvera (HOST — внутренний адрес вида amvera-<user>-cnpg-<имя>-rw)
+#   DJANGO_SUPERUSER_USERNAME / DJANGO_SUPERUSER_PASSWORD / DJANGO_SUPERUSER_EMAIL
+#     — админ создастся сам при первом запуске (после входа переменные можно удалить)
+# CORS настраивать не нужно: сайт и API работают на одном домене.
