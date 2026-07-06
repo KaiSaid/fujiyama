@@ -15,21 +15,37 @@ const Login = () => {
     setError('');
     setLoading(true);
 
+    let response;
     try {
-      const response = await api.post('token/', { username, password });
-
-      // Единые ключи токенов для всего приложения
-      localStorage.setItem('access_token', response.data.access);
-      localStorage.setItem('refresh_token', response.data.refresh);
-      localStorage.setItem('token', response.data.access);
-      localStorage.setItem('username', username);
-
-      // Перенаправляем в админку
-      navigate('/admin/students');
-    } catch (err) {
-      console.error('Ошибка входа:', err);
+      response = await api.post('token/', { username, password });
+    } catch {
       setError('Неверный логин или пароль');
-    } finally {
+      setLoading(false);
+      return;
+    }
+
+    // Токен получен — но в CRM пускаем только администраторов.
+    // Временно сохраняем токен, чтобы проверить права через профиль.
+    localStorage.setItem('access_token', response.data.access);
+    localStorage.setItem('token', response.data.access);
+    try {
+      const me = await api.get('profile-data/');
+      if (!me.data.is_superuser) {
+        // Обычный ученик — доступа к панели нет.
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('token');
+        setError('У этой учётной записи нет прав администратора.');
+        setLoading(false);
+        return;
+      }
+      // Права подтверждены — сохраняем остальное и входим.
+      localStorage.setItem('refresh_token', response.data.refresh);
+      localStorage.setItem('username', username);
+      navigate('/admin');
+    } catch {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('token');
+      setError('Не удалось проверить права доступа. Попробуйте ещё раз.');
       setLoading(false);
     }
   };

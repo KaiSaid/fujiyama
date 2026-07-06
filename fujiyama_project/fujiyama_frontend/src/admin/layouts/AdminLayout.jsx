@@ -12,15 +12,34 @@ import {
   Menu,
   X
 } from 'lucide-react';
+import api from '../../api';
 import { studentService } from '../services/studentService';
 
 const AdminLayout = () => {
   const navigate = useNavigate();
   const [newRequests, setNewRequests] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Состояние проверки прав: 'checking' | 'ok' | 'denied'.
+  // Если токена нет вовсе — сразу 'denied', без лишнего запроса.
+  const [authState, setAuthState] = useState(() => {
+    const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+    return token ? 'checking' : 'denied';
+  });
 
-  // Счётчик новых заявок с сайта: при входе и раз в минуту
+  // При входе в панель проверяем на сервере, что токен действителен
+  // И принадлежит администратору. Иначе — на страницу входа.
   useEffect(() => {
+    if (authState !== 'checking') return;
+    let active = true;
+    api.get('profile-data/')
+      .then((res) => { if (active) setAuthState(res.data.is_superuser ? 'ok' : 'denied'); })
+      .catch(() => { if (active) setAuthState('denied'); });
+    return () => { active = false; };
+  }, [authState]);
+
+  // Счётчик новых заявок с сайта — только после подтверждения прав, раз в минуту
+  useEffect(() => {
+    if (authState !== 'ok') return;
     const load = () =>
       studentService.getStats()
         .then((stats) => setNewRequests(stats.new_trial_requests || 0))
@@ -28,11 +47,18 @@ const AdminLayout = () => {
     load();
     const timer = setInterval(load, 60000);
     return () => clearInterval(timer);
-  }, []);
+  }, [authState]);
 
-  // Guard: без токена в CRM делать нечего — отправляем на страницу входа.
-  const token = localStorage.getItem('access_token') || localStorage.getItem('token');
-  if (!token) {
+  // Пока проверяем права — показываем заглушку
+  if (authState === 'checking') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-400 text-sm font-medium">
+        Проверка доступа…
+      </div>
+    );
+  }
+  // Нет токена или не администратор — на страницу входа
+  if (authState === 'denied') {
     return <Navigate to="/admin/login" replace />;
   }
 
