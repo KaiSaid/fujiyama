@@ -1,8 +1,22 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { Menu, X } from 'lucide-react';
 import api from './api';
 // ИМПОРТИРУЕМ ЛОГОТИП НАПРЯМУЮ
 import logo from './assets/logo.jpg.jpg';
+
+// --- ХУК: определяет, что экран узкий (телефон/планшет) ---
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth <= breakpoint : false
+  );
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= breakpoint);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [breakpoint]);
+  return isMobile;
+}
 import AdminLayout from './admin/layouts/AdminLayout.jsx';
 import AdminLogin from './admin/pages/Login.jsx';
 import Dashboard from './admin/pages/Dashboard.jsx';
@@ -42,6 +56,9 @@ function NavScrollLink({ targetId, children }) {
 
 // --- НАВИГАЦИЯ ---
 function Navbar({ user, onLogout }) {
+  const isMobile = useIsMobile();
+  const [menuOpen, setMenuOpen] = useState(false);
+
   const navStyle = {
     position: 'sticky', top: 0, width: '100%', zIndex: 1000,
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -51,20 +68,75 @@ function Navbar({ user, onLogout }) {
     boxSizing: 'border-box'
   };
 
+  const brand = (
+    <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', color: '#111827' }}>
+      <img
+        src={logo}
+        alt="Dojo Logo"
+        style={{ height: '40px', width: '40px', borderRadius: '50%', objectFit: 'cover' }}
+        onError={(e) => { e.target.style.display = 'none'; }}
+      />
+      <span style={{ fontWeight: '700', fontSize: '1.25rem', letterSpacing: '-0.02em' }}>Fujiyama</span>
+    </Link>
+  );
+
+  const authLinks = (
+    <>
+      {user && <Link to="/profile" style={{ textDecoration: 'none', color: '#4f46e5', fontWeight: '600', fontSize: '0.95rem' }}>Кабинет</Link>}
+      {user ? (
+        <button onClick={onLogout} style={{ background: 'none', color: '#6b7280', border: 'none', cursor: 'pointer', fontWeight: '500', fontSize: '0.95rem' }}>
+          Выйти
+        </button>
+      ) : (
+        <Link to="/login" style={{ textDecoration: 'none', color: '#111827', fontWeight: '500', fontSize: '0.95rem' }}>
+          Войти
+        </Link>
+      )}
+    </>
+  );
+
+  // --- МОБИЛЬНАЯ ВЕРСИЯ: логотип + кнопка-гамбургер с выпадающим меню ---
+  if (isMobile) {
+    return (
+      <nav style={navStyle}>
+        {brand}
+        <button
+          onClick={() => setMenuOpen((o) => !o)}
+          aria-label="Меню"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#111827', display: 'flex', padding: '4px' }}
+        >
+          {menuOpen ? <X size={26} /> : <Menu size={26} />}
+        </button>
+
+        {menuOpen && (
+          <div
+            onClick={() => setMenuOpen(false)}
+            style={{
+              position: 'absolute', top: '100%', left: 0, right: 0,
+              backgroundColor: '#ffffff', borderBottom: '1px solid #e5e7eb',
+              display: 'flex', flexDirection: 'column', gap: '18px',
+              padding: '20px 5%', boxShadow: '0 8px 16px rgba(0,0,0,0.06)'
+            }}
+          >
+            <NavScrollLink targetId="hero">Главная</NavScrollLink>
+            <NavScrollLink targetId="about">О нас</NavScrollLink>
+            <NavScrollLink targetId="schedule">Расписание</NavScrollLink>
+            <NavScrollLink targetId="instructors">Тренеры</NavScrollLink>
+            <NavScrollLink targetId="contact">Контакты</NavScrollLink>
+            <div style={{ height: '1px', backgroundColor: '#e5e7eb' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+              {authLinks}
+            </div>
+          </div>
+        )}
+      </nav>
+    );
+  }
+
+  // --- ДЕСКТОП ---
   return (
     <nav style={navStyle}>
-      {/* ЛЕВАЯ ЧАСТЬ: ЭМБЛЕМА И НАЗВАНИЕ */}
-      <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', color: '#111827' }}>
-        <img 
-          src={logo} 
-          alt="Dojo Logo" 
-          style={{ height: '40px', width: '40px', borderRadius: '50%', objectFit: 'cover' }} 
-          onError={(e) => { e.target.style.display = 'none'; console.error("Логотип не найден!"); }} 
-        />
-        <span style={{ fontWeight: '700', fontSize: '1.25rem', letterSpacing: '-0.02em' }}>Fujiyama</span>
-      </Link>
-      
-      {/* ЦЕНТР: МЕНЮ */}
+      {brand}
       <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
         <NavScrollLink targetId="hero">Главная</NavScrollLink>
         <NavScrollLink targetId="about">О нас</NavScrollLink>
@@ -72,19 +144,8 @@ function Navbar({ user, onLogout }) {
         <NavScrollLink targetId="instructors">Тренеры</NavScrollLink>
         <NavScrollLink targetId="contact">Контакты</NavScrollLink>
       </div>
-
-      {/* ПРАВАЯ ЧАСТЬ: КАБИНЕТ / ВХОД */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-        {user && <Link to="/profile" style={{ textDecoration: 'none', color: '#4f46e5', fontWeight: '600', fontSize: '0.95rem' }}>Кабинет</Link>}
-        {user ? (
-          <button onClick={onLogout} style={{ background: 'none', color: '#6b7280', border: 'none', cursor: 'pointer', fontWeight: '500', fontSize: '0.95rem' }}>
-            Выйти
-          </button>
-        ) : (
-          <Link to="/login" style={{ textDecoration: 'none', color: '#111827', fontWeight: '500', fontSize: '0.95rem' }}>
-            Войти
-          </Link>
-        )}
+        {authLinks}
       </div>
     </nav>
   );
@@ -205,19 +266,19 @@ function Home({ user }) {
     <div style={{ backgroundColor: '#ffffff' }}>
       
       {/* 1. HERO СЕКЦИЯ */}
-      <section id="hero" style={{ padding: '100px 20px', textAlign: 'center', maxWidth: '800px', margin: '0 auto' }}>
-        <h1 style={{ display: 'flex', flexDirection: 'column', gap: '35px', fontSize: '3.5rem', fontWeight: '800', margin: '0 0 20px 0', letterSpacing: '-0.03em' }}>
+      <section id="hero" style={{ padding: 'clamp(50px, 12vw, 100px) 20px', textAlign: 'center', maxWidth: '800px', margin: '0 auto' }}>
+        <h1 style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(8px, 3vw, 35px)', fontSize: 'clamp(2.2rem, 9vw, 3.5rem)', fontWeight: '800', margin: '0 0 20px 0', letterSpacing: '-0.03em' }}>
           <span style={{ color: '#111827' }}>Традиции Каратэ в</span>
           <span style={{ color: '#ff0000' }}>Fujiyama</span>
         </h1>
-        <p style={{ fontSize: '1.2rem', color: '#4b5563', lineHeight: '1.6', marginBottom: '40px' }}>
+        <p style={{ fontSize: 'clamp(1rem, 3.5vw, 1.2rem)', color: '#4b5563', lineHeight: '1.6', marginBottom: '40px' }}>
           Трансформируйте тело и дух через традиционные тренировки боевых искусств в современном додзё под руководством опытных тренеров.
         </p>
       </section>
 
       {/* 2. СЕКЦИЯ "О НАС" */}
-      <section id="about" style={{ padding: '80px 5%', backgroundColor: '#f9fafb' }}>
-        <h2 style={{ textAlign: 'center', fontSize: '2.5rem', marginBottom: '10px', color: '#111827' }}>О нашем Клубе</h2>
+      <section id="about" style={{ padding: 'clamp(48px, 10vw, 80px) 5%', backgroundColor: '#f9fafb' }}>
+        <h2 style={{ textAlign: 'center', fontSize: 'clamp(1.8rem, 6vw, 2.5rem)', marginBottom: '10px', color: '#111827' }}>О нашем Клубе</h2>
         <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: '50px' }}>Мы обучаем боевым искусствам более 10 лет, сохраняя традиции и ценности.</p>
         
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '30px', maxWidth: '1200px', margin: '0 auto' }}>
@@ -235,8 +296,8 @@ function Home({ user }) {
       </section>
 
       {/* 3. СЕКЦИЯ РАСПИСАНИЯ */}
-      <section id="schedule" style={{ padding: '80px 5%', backgroundColor: '#ffffff' }}>
-        <h2 style={{ textAlign: 'center', fontSize: '2.5rem', marginBottom: '10px', color: '#111827' }}>Расписание занятий</h2>
+      <section id="schedule" style={{ padding: 'clamp(48px, 10vw, 80px) 5%', backgroundColor: '#ffffff' }}>
+        <h2 style={{ textAlign: 'center', fontSize: 'clamp(1.8rem, 6vw, 2.5rem)', marginBottom: '10px', color: '#111827' }}>Расписание занятий</h2>
         <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: '50px' }}>Выберите группу, подходящую для вашего уровня подготовки</p>
         
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gap: '40px' }}>
@@ -248,7 +309,7 @@ function Home({ user }) {
                 <h3 style={{ fontSize: '1.5rem', color: '#374151', borderBottom: '2px solid #f3f4f6', paddingBottom: '10px', marginBottom: '20px' }}>
                   {section.name}
                 </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '20px' }}>
                   {section.groups?.map(group => (
                     <div key={group.id} style={{ padding: '24px', border: '1px solid #e5e7eb', borderRadius: '12px', display: 'flex', flexDirection: 'column' }}>
                       <h4 style={{ margin: '0 0 15px 0', fontSize: '1.1rem', color: '#111827' }}>{group.name}</h4>
@@ -273,8 +334,8 @@ function Home({ user }) {
       </section>
 
       {/* --- СЕКЦИЯ ТРЕНЕРЫ --- */}
-      <section id="instructors" style={{ padding: '80px 5%', backgroundColor: '#ffffff', color: '#000000' }}>
-        <h2 style={{ textAlign: 'center', color: '#000000', fontSize: '2.5rem', marginBottom: '10px' }}>Наши наставники</h2>
+      <section id="instructors" style={{ padding: 'clamp(48px, 10vw, 80px) 5%', backgroundColor: '#ffffff', color: '#000000' }}>
+        <h2 style={{ textAlign: 'center', color: '#000000', fontSize: 'clamp(1.8rem, 6vw, 2.5rem)', marginBottom: '10px' }}>Наши наставники</h2>
         <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: '50px' }}>Мастера с многолетним опытом преподавания</p>
         
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '40px', maxWidth: '1000px', margin: '0 auto' }}>
@@ -303,8 +364,8 @@ function Home({ user }) {
       </section>
 
       {/* 4. СЕКЦИЯ КОНТАКТОВ */}
-      <section id="contact" style={{ padding: '80px 5%', backgroundColor: '#f9fafb' }}>
-        <h2 style={{ textAlign: 'center', fontSize: '2.5rem', marginBottom: '40px', color: '#111827' }}>Ждем вас на тренировках</h2>
+      <section id="contact" style={{ padding: 'clamp(48px, 10vw, 80px) 5%', backgroundColor: '#f9fafb' }}>
+        <h2 style={{ textAlign: 'center', fontSize: 'clamp(1.8rem, 6vw, 2.5rem)', marginBottom: '40px', color: '#111827' }}>Ждем вас на тренировках</h2>
         <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center', padding: '40px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
           <p style={{ fontSize: '1.2rem', color: '#374151', margin: '10px 0' }}><strong>Адрес:</strong> ул. Главная, 123, Спортивный комплекс</p>
           <p style={{ fontSize: '1.2rem', color: '#374151', margin: '10px 0' }}><strong>Телефон:</strong> +7 (999) 123-45-67</p>
@@ -386,7 +447,7 @@ function ProfilePage() {
   // Если бэкенд отдал 404 для админа — даем ему кнопку явного перехода в CRM панели управления
   if (error) {
     return (
-      <div style={{ padding: '80px 5%', textAlign: 'center', backgroundColor: '#f9fafb', minHeight: 'calc(100vh - 70px)' }}>
+      <div style={{ padding: 'clamp(48px, 10vw, 80px) 5%', textAlign: 'center', backgroundColor: '#f9fafb', minHeight: 'calc(100vh - 70px)' }}>
         <div style={{ maxWidth: '500px', margin: '0 auto', backgroundColor: 'white', padding: '40px', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
           <h3 style={{ color: '#111827', marginBottom: '10px' }}>Доступ к панели управления</h3>
           <p style={{ color: '#6b7280', marginBottom: '25px', fontSize: '0.95rem' }}>Данные обычного ученика отсутствуют. Перейдите в административный интерфейс.</p>

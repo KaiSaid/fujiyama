@@ -8,13 +8,16 @@ import {
   LogOut,
   Bell,
   Globe,
-  ClipboardList
+  ClipboardList,
+  Menu,
+  X
 } from 'lucide-react';
 import { studentService } from '../services/studentService';
 
 const AdminLayout = () => {
   const navigate = useNavigate();
   const [newRequests, setNewRequests] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Счётчик новых заявок с сайта: при входе и раз в минуту
   useEffect(() => {
@@ -55,13 +58,28 @@ const AdminLayout = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
-      
-      {/* SIDEBAR */}
-      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col fixed h-full z-10">
-        <div className="h-16 flex items-center px-6 border-b border-slate-200">
+
+      {/* Затемнение под открытым меню (только на телефоне) */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 bg-black/40 z-20 md:hidden"
+        />
+      )}
+
+      {/* SIDEBAR — на телефоне выезжает слева, на десктопе закреплён */}
+      <aside
+        className={`w-64 bg-white border-r border-slate-200 flex flex-col fixed h-full z-30 transition-transform duration-200
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
+      >
+        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-200">
           <Link to="/" className="text-xl font-bold text-indigo-600 tracking-tight hover:text-indigo-700 transition-colors" title="Открыть сайт клуба">
             Fujiyama CRM
           </Link>
+          {/* Крестик закрытия — только на телефоне */}
+          <button onClick={() => setSidebarOpen(false)} className="md:hidden text-slate-400 hover:text-slate-700">
+            <X size={20} />
+          </button>
         </div>
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
           {menuItems.map((item) => (
@@ -69,10 +87,11 @@ const AdminLayout = () => {
               key={item.name}
               to={item.path}
               end={item.exact}
+              onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm ${
-                  isActive 
-                    ? 'bg-indigo-50 text-indigo-700' 
+                  isActive
+                    ? 'bg-indigo-50 text-indigo-700'
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 }`
               }
@@ -100,15 +119,20 @@ const AdminLayout = () => {
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <div className="flex-1 ml-64 flex flex-col min-h-screen">
-        
+      <div className="flex-1 md:ml-64 flex flex-col min-h-screen min-w-0">
+
         {/* TOPBAR */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-10">
-          <div className="flex items-center text-slate-400">
-            {/* Можно добавить глобальный поиск или хлебные крошки */}
-          </div>
-          
-          <div className="flex items-center gap-6">
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-10">
+          {/* Кнопка-гамбургер — только на телефоне */}
+          <button
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Меню"
+            className="md:hidden text-slate-500 hover:text-slate-900 -ml-1 p-1"
+          >
+            <Menu size={24} />
+          </button>
+
+          <div className="flex items-center gap-4 sm:gap-6 ml-auto">
             {/* Колокольчик показывает число новых заявок и ведёт на их страницу */}
             <button
               onClick={() => navigate('/admin/requests')}
@@ -122,9 +146,9 @@ const AdminLayout = () => {
                 </span>
               )}
             </button>
-            
-            <div className="flex items-center gap-3 pl-6 border-l border-slate-200">
-              <div className="text-right">
+
+            <div className="flex items-center gap-3 pl-4 sm:pl-6 border-l border-slate-200">
+              <div className="text-right hidden sm:block">
                 <p className="text-sm font-semibold text-slate-700 leading-none">{adminName}</p>
                 <p className="text-xs text-slate-500 mt-1">Администратор</p>
               </div>
@@ -135,8 +159,8 @@ const AdminLayout = () => {
           </div>
         </header>
 
-        {/* PAGE CONTENT (Рендерит StudentsList.jsx и другие страницы) */}
-        <main className="flex-1 p-6 sm:p-8">
+        {/* PAGE CONTENT */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">
             <Outlet />
           </div>

@@ -119,11 +119,11 @@ const StudentsList = () => {
       </div>
 
       {/* Таблица */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
         {loading ? (
           <div className="p-12 text-center text-gray-400 text-sm font-medium">Загрузка данных из системы...</div>
         ) : (
-          <table className="w-full text-left border-collapse">
+          <table className="w-full min-w-[720px] text-left border-collapse">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/50 text-gray-400 text-xs font-semibold uppercase tracking-wider">
                 <th className="p-4 pl-6 font-medium">Спортсмен</th>
