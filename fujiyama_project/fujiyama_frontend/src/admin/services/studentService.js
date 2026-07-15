@@ -59,6 +59,26 @@ export const requestService = {
   }
 };
 
+// Секции, группы и расписание: полное управление из CRM
+export const clubService = {
+  getSections: async () => (await apiClient.get('sections/')).data,
+  createSection: async (data) => (await apiClient.post('sections/', data)).data,
+  updateSection: async (id, data) => (await apiClient.put(`sections/${id}/`, data)).data,
+  deleteSection: async (id) => (await apiClient.delete(`sections/${id}/`)).data,
+
+  getGroups: async () => (await apiClient.get('groups/')).data,
+  createGroup: async (data) => (await apiClient.post('groups/', data)).data,
+  updateGroup: async (id, data) => (await apiClient.put(`groups/${id}/`, data)).data,
+  deleteGroup: async (id) => (await apiClient.delete(`groups/${id}/`)).data,
+
+  getSchedules: async () => (await apiClient.get('schedules/')).data,
+  createSchedule: async (data) => (await apiClient.post('schedules/', data)).data,
+  updateSchedule: async (id, data) => (await apiClient.put(`schedules/${id}/`, data)).data,
+  deleteSchedule: async (id) => (await apiClient.delete(`schedules/${id}/`)).data,
+
+  getStaff: async () => (await apiClient.get('staff/')).data,
+};
+
 // Турниры (соревнования): управление из CRM
 export const competitionService = {
   getCompetitions: async () => {
